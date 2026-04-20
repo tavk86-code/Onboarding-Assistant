@@ -31,6 +31,73 @@ This project addresses that problem by building an **AI-powered support layer** 
 
 ## Key Capabilities
 
+┌──────────────────────────────────────────────────────────────────────┐
+│                           User Channels                             │
+│                 Web UI / Slack / Internal API / MCP                │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │
+                                ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                          API / Gateway Layer                        │
+│  FastAPI • request validation • auth • streaming • observability   │
+└───────────────────────────────┬──────────────────────────────────────┘
+                                │
+                                ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│                        Agent Orchestration Layer                    │
+│----------------------------------------------------------------------│
+│ 1. Session / memory lookup                                           │
+│ 2. Query intent classification                                       │
+│ 3. Follow-up detection + contextual enrichment                       │
+│ 4. Ambiguity detection / clarification logic                         │
+│ 5. Query expansion or decomposition into sub-questions               │
+│ 6. Retrieval strategy selection                                      │
+│ 7. Evidence aggregation                                              │
+│ 8. Answer synthesis                                                  │
+│ 9. Confidence scoring                                                │
+│ 10. Review routing / escalation                                      │
+└───────────────┬───────────────────────┬───────────────────────────────┘
+                │                       │
+                │                       │
+                ▼                       ▼
+┌──────────────────────────────┐   ┌───────────────────────────────────┐
+│   Retrieval & Evidence Layer │   │        LLM Reasoning Layer        │
+│──────────────────────────────│   │───────────────────────────────────│
+│ Semantic retrieval           │   │ Query rewrite / expansion         │
+│ BM25 / keyword retrieval     │   │ Sub-question decomposition        │
+│ Metadata filtering           │   │ Evidence-grounded answer gen      │
+│ Cross-reference expansion    │   │ Structured output generation      │
+│ Troubleshooting rule lookup  │   │ Optional critique / self-check    │
+│ Cross-encoder reranking      │   │ Clarification question generation │
+└───────────────┬──────────────┘   └─────────────────┬─────────────────┘
+                │                                    │
+                ▼                                    ▼
+┌──────────────────────────────┐        ┌──────────────────────────────┐
+│      Knowledge Sources       │        │   Interaction / Review DB   │
+│──────────────────────────────│        │──────────────────────────────│
+│ Product docs / markdown      │        │ User query                  │
+│ Troubleshooting runbooks     │        │ Retrieved evidence          │
+│ Workflow/process guides      │        │ Response                    │
+│ API / system references      │        │ Confidence breakdown        │
+│ Historical incident learnings│        │ Review status               │
+└──────────────────────────────┘        │ Human feedback              │
+                                        │ Resolution / outcome        │
+                                        └──────────────┬──────────────┘
+                                                       │
+                                                       ▼
+                                      ┌────────────────────────────────┐
+                                      │ Human Review & Improvement Loop│
+                                      │────────────────────────────────│
+                                      │ Slack alert / review queue     │
+                                      │ Prompt updates                 │
+                                      │ KB updates                     │
+                                      │ Retrieval tuning               │
+                                      │ Evaluation set expansion       │
+                                      └────────────────────────────────┘
+
+
+
+
 ### 1. Query understanding
 The system first interprets the user’s intent and classifies the query into operational categories such as:
 
@@ -134,170 +201,3 @@ User → API Layer → Agent Orchestrator → Retrieval + LLM Reasoning
                      Interaction Store / Feedback Loop
 
 
-Architecture detail
-API Layer: FastAPI endpoints for query handling, health, and optional review actions
-Agent Orchestrator: central control plane for query understanding, retrieval orchestration, answer generation, scoring, and review routing
-Retrieval Layer: hybrid retrieval combining vector search, keyword search, and rule-based lookup
-LLM Layer: query rewrite, decomposition, grounded answer generation, optional self-check
-Knowledge Sources: markdown docs, troubleshooting guides, process docs, system references
-Interaction Store: stores queries, responses, evidence, confidence scores, and review outcomes
-Review Loop: alerts and human feedback used to improve prompts, retrieval, and content
-End-to-End Flow
-User submits a question
-Example: Why is Store 123 still not activated?
-Agent classifies the query
-Example classification: stuck_workflow
-Session and context are loaded
-If the query is a follow-up, prior messages are incorporated
-Query is expanded or decomposed if needed
-Example:
-Is activation blocked by financial verification?
-Is provisioning complete?
-Are there missing prerequisites?
-Retrieval pipeline runs
-semantic retrieval
-BM25 retrieval
-troubleshooting rule lookup
-reranking
-Evidence is aggregated
-top chunks selected
-missing references optionally expanded
-LLM generates grounded answer
-explanation
-likely root cause
-recommended next step
-cited sources
-Confidence score is computed
-if below threshold, flag for review
-Interaction is stored
-query, response, evidence, confidence, review status
-Feedback loop improves future responses
-review outcome can lead to prompt updates or KB changes
-Example Query
-Input
-
-Why is merchant onboarding stuck for Store 123?
-
-Example Output
-Likely issue: Financial verification incomplete
-Owning system: Merchant Financial Service
-Explanation: Activation cannot proceed until payout/bank verification is complete
-Recommended next step: Re-trigger bank verification flow or route to finance ops
-Sources:
-troubleshooting.md
-financial_onboarding.md
-Confidence: 0.81
-Technical Design Principles
-Grounding over freeform generation
-
-The assistant is designed to answer from retrieved evidence rather than relying on unguided model memory.
-
-Modular orchestration
-
-The architecture separates:
-
-API handling
-orchestration
-retrieval
-generation
-scoring
-review
-
-This makes the system easier to evolve and debug.
-
-Hybrid retrieval over single-method search
-
-Operational support queries benefit from combining:
-
-semantic similarity
-exact phrase matching
-explicit rule lookup
-Human-in-the-loop safety
-
-Low-confidence responses are routed for review rather than silently accepted.
-
-Continuous improvement
-
-The system is designed to learn from:
-
-missed answers
-flagged responses
-reviewer feedback
-new documentation
-Example Components
-API Layer
-FastAPI
-request validation
-streaming / non-streaming responses
-health endpoints
-Retrieval Layer
-vector database for semantic search
-BM25 or keyword index for lexical retrieval
-metadata-based chunk filtering
-reranking for top evidence selection
-LLM Layer
-query rewrite
-decomposition
-grounded answer generation
-optional critique / self-check
-Data / Storage
-knowledge base documents
-interaction store
-review metadata
-optional session state
-Alerting / Review
-Slack notifications for low-confidence answers
-review queue for human validation
-structured review outcomes
-Example Confidence Framework
-
-A simplified response confidence can be computed as a weighted combination of:
-
-retrieval score: quality of top retrieved evidence
-coverage score: breadth/sufficiency of evidence
-classification score: confidence in query type routing
-response score: heuristic answer quality
-
-Example:
-
-confidence =
-  0.40 * retrieval +
-  0.25 * coverage +
-  0.15 * classification +
-  0.20 * response_quality
-
-Responses below threshold can be:
-
-flagged
-logged
-reviewed by humans
-used to improve prompts and documentation
-Sample Tech Stack
-
-This project can be implemented with:
-
-Backend: Python, FastAPI
-LLM: OpenAI-compatible completion API
-Embeddings: OpenAI-compatible embeddings
-Vector Store: Qdrant / similar
-Keyword Search: BM25 / Whoosh / in-memory lexical search
-Storage: PostgreSQL / SQLite / lightweight interaction log
-Cache / Session: Redis (optional)
-Alerts: Slack webhook
-Evaluation: golden dataset + real operational queries
-Representative Business Impact
-
-This class of solution is designed to improve operational performance by:
-
-reducing manual support effort
-reducing dependency on engineering teams
-accelerating issue resolution
-standardizing troubleshooting quality
-creating reusable AI-enabled workflow patterns
-
-Example outcomes:
-
-reduced support requests by 70%
-improved resolution time from 3+ days to <24 hours
-increased self-service for operations teams
-improved visibility into workflow bottlenecks
