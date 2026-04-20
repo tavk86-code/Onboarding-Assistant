@@ -31,6 +31,7 @@ This project addresses that problem by building an **AI-powered support layer** 
 
 ## Key Capabilities
 
+```text
 ┌──────────────────────────────────────────────────────────────────────┐
 │                           User Channels                             │
 │                 Web UI / Slack / Internal API / MCP                │
